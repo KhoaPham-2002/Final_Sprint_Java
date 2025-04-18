@@ -1,43 +1,56 @@
-CREATE TABLE users (
-                       user_id SERIAL PRIMARY KEY,
-                       username VARCHAR(50) NOT NULL,
-                       email VARCHAR(100) NOT NULL UNIQUE,
-                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- ===============================
+-- DROP TABLES IF THEY EXIST (in reverse dependency order)
+-- ===============================
+
+DROP TABLE IF EXISTS training_session CASCADE;
+DROP TABLE IF EXISTS app_user CASCADE;
+DROP TABLE IF EXISTS memberships CASCADE;
+
+-- ===============================
+-- APP_USER TABLE
+-- ===============================
+CREATE TABLE IF NOT EXISTS app_user (
+    id SERIAL PRIMARY KEY,
+    user_name VARCHAR(100) NOT NULL,
+    user_email VARCHAR(100) NOT NULL UNIQUE,
+    user_password TEXT NOT NULL,
+    user_phone VARCHAR(15),
+    user_address TEXT,
+    user_role VARCHAR(20) NOT NULL CHECK (user_role IN ('member', 'trainer', 'admin')),
 );
 
-CREATE TABLE cars (
-                      car_id SERIAL PRIMARY KEY,
-                      make VARCHAR(50) NOT NULL,
-                      model VARCHAR(50) NOT NULL,
-                      year INT NOT NULL,
-                      price DECIMAL(10, 2) NOT NULL,
-                      seller_id INT NOT NULL,
-                      FOREIGN KEY (seller_id) REFERENCES users(user_id) ON DELETE CASCADE
+-- ===============================
+-- MEMBERSHIP TABLE 
+-- ===============================
+-------------
+CREATE TABLE memberships (
+    id SERIAL PRIMARY KEY,
+    membership_type VARCHAR(50),
+    membership_description TEXT,
+    membership_cost NUMERIC(10, 2),
+    customer_id INTEGER,
+    valid_from DATE,
+    valid_until DATE,
+    credits_remaining INTEGER
+);
+
+-- ===============================
+-- TRAINING_SESSION TABLE 
+-- ===============================
+CREATE TABLE IF NOT EXISTS training_session (
+    session_id SERIAL PRIMARY KEY,
+    session_type VARCHAR(50) NOT NULL,
+    session_details TEXT,
+    instructor_id INT REFERENCES app_user(id) ON DELETE SET NULL,
+    starts_at TIME,
+    ends_at TIME,
+    session_day DATE
 );
 
 
 
-CREATE TABLE IF NOT EXISTS public.space_fleet_memberships
-(
-    membership_id SERIAL PRIMARY KEY,
-    membership_tier VARCHAR(50) NOT NULL,
-    membership_credits INTEGER NOT NULL,
-    membership_log TEXT,
-    date_registered DATE DEFAULT CURRENT_DATE,
-    astronaut_id INTEGER NOT NULL,
-    CONSTRAINT space_fleet_memberships_astronaut_fkey FOREIGN KEY (astronaut_id)
-    REFERENCES public.astronauts (astronaut_id)
-    ON UPDATE NO ACTION
-    ON DELETE CASCADE
-    );
-
-TABLESPACE pg_default;
 
 
--- Getting sum for sumberships by month example
-SELECT
-    TO_CHAR(date_purchased, 'YYYY-MM') AS month,
-    SUM(membership_price) AS total_revenue
-FROM public.memberships
-GROUP BY month
-ORDER BY month;
+
+
+
